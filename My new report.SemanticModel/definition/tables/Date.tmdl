@@ -1,0 +1,106 @@
+/// Date dimension at month grain. Contains one row per calendar month between Jan 2022 and Dec 2023 and provides Year/Quarter/Month attributes used for time-intelligence calculations and slicing.
+table Date
+	lineageTag: 27075cd3-09df-4a11-a0eb-17cf5d3be72d
+	sourceLineageTag: b11a86cf-d92e-4f86-bce2-8906a4823d37
+
+	/// First day of the calendar month. The grain of this table.
+	column Date
+		dataType: dateTime
+		isNullable: false
+		formatString: General Number
+		lineageTag: ec477785-0a5b-4625-a088-f7eff9c855df
+		sourceLineageTag: f5fc300c-7163-45ab-8d2a-2fced06c3523
+		dataCategory: Uncategorized
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = User
+
+	/// Calendar year label in 'CYyyyy' format (e.g. CY2023). Top level of the Fiscal hierarchy.
+	column Year
+		dataType: string
+		lineageTag: 745c9eb8-c647-4ec3-9307-e29d997bd0b6
+		sourceLineageTag: 5a2c0a6a-d861-42ec-8ee1-310f36848145
+		dataCategory: Uncategorized
+		summarizeBy: none
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = User
+
+	/// Calendar quarter label (Qtr1-Qtr4).
+	column Quarter
+		dataType: string
+		lineageTag: 5e6fd4d0-6c48-4be2-a6e0-d889d86e21ce
+		sourceLineageTag: e9a5fee7-a117-478a-9a66-4e3696372c9d
+		dataCategory: Uncategorized
+		summarizeBy: none
+		sourceColumn: Quarter
+
+		annotation SummarizationSetBy = User
+
+	/// Full month name (January, February, ...). Sorted by MonthKey so months appear in calendar order, not alphabetically.
+	column Month
+		dataType: string
+		lineageTag: 17b01266-9fab-4709-bedd-71956fceee54
+		sourceLineageTag: c79e80fe-a254-4b38-9e01-c1c810dfaf43
+		dataCategory: Uncategorized
+		summarizeBy: none
+		sourceColumn: Month
+		sortByColumn: MonthKey
+
+		annotation SummarizationSetBy = User
+
+	/// Year+month integer in yyyymm form (e.g. 202307). Used as the sort key for the Month column.
+	column MonthKey
+		dataType: int64
+		formatString: 0
+		lineageTag: cafd9b8b-aba2-4c5e-9d6f-f6e608992447
+		sourceLineageTag: f26d8342-6ed4-46bc-b3c5-39efc04ce822
+		dataCategory: Uncategorized
+		summarizeBy: count
+		sourceColumn: MonthKey
+
+		annotation SummarizationSetBy = User
+
+	hierarchy Fiscal
+		lineageTag: aa9081ba-08c7-498e-b9c0-3c68cab7b4d9
+		sourceLineageTag: a3a45406-031d-4167-b6ec-c0a9608e95a8
+
+		level Year
+			lineageTag: fe3ef45b-2bfe-4ae8-aed9-63634b97d4dd
+			sourceLineageTag: 5730c2a5-ef6f-4b85-969f-dbdff05407e7
+			column: Year
+
+	partition Date = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRecords({
+				        [Date = #datetime(2022, 1, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr1", Month = "January", MonthKey = 202201],
+				        [Date = #datetime(2022, 2, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr1", Month = "February", MonthKey = 202202],
+				        [Date = #datetime(2022, 3, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr1", Month = "March", MonthKey = 202203],
+				        [Date = #datetime(2022, 4, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr2", Month = "April", MonthKey = 202204],
+				        [Date = #datetime(2022, 5, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr2", Month = "May", MonthKey = 202205],
+				        [Date = #datetime(2022, 6, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr2", Month = "June", MonthKey = 202206],
+				        [Date = #datetime(2022, 7, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr3", Month = "July", MonthKey = 202207],
+				        [Date = #datetime(2022, 8, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr3", Month = "August", MonthKey = 202208],
+				        [Date = #datetime(2022, 9, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr3", Month = "September", MonthKey = 202209],
+				        [Date = #datetime(2022, 10, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr4", Month = "October", MonthKey = 202210],
+				        [Date = #datetime(2022, 11, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr4", Month = "November", MonthKey = 202211],
+				        [Date = #datetime(2022, 12, 1, 0, 0, 0), Year = "CY2022", Quarter = "Qtr4", Month = "December", MonthKey = 202212],
+				        [Date = #datetime(2023, 1, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr1", Month = "January", MonthKey = 202301],
+				        [Date = #datetime(2023, 2, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr1", Month = "February", MonthKey = 202302],
+				        [Date = #datetime(2023, 3, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr1", Month = "March", MonthKey = 202303],
+				        [Date = #datetime(2023, 4, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr2", Month = "April", MonthKey = 202304],
+				        [Date = #datetime(2023, 5, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr2", Month = "May", MonthKey = 202305],
+				        [Date = #datetime(2023, 6, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr2", Month = "June", MonthKey = 202306],
+				        [Date = #datetime(2023, 7, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr3", Month = "July", MonthKey = 202307],
+				        [Date = #datetime(2023, 8, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr3", Month = "August", MonthKey = 202308],
+				        [Date = #datetime(2023, 9, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr3", Month = "September", MonthKey = 202309],
+				        [Date = #datetime(2023, 10, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr4", Month = "October", MonthKey = 202310],
+				        [Date = #datetime(2023, 11, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr4", Month = "November", MonthKey = 202311],
+				        [Date = #datetime(2023, 12, 1, 0, 0, 0), Year = "CY2023", Quarter = "Qtr4", Month = "December", MonthKey = 202312]
+				    }, type table [Date = DateTime.Type, Year = Text.Type, Quarter = Text.Type, Month = Text.Type, MonthKey = Int64.Type])
+				in
+				    Source
+
