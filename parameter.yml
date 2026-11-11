@@ -18,7 +18,7 @@ find_replace:
     # To find your connection ID: Fabric portal → Settings → Manage connections
     # The __PLACEHOLDER__ tokens below are replaced at pipeline runtime with
     # values from the "Fabric-Deploy" variable group — never commit real IDs.
-    - find_value: "00000000-0000-0000-0000-000000000000"       # DEV connection ID
+    - find_value: "105b7b51-36a2-4327-933b-d581d16bbff7"       # DEV connection ID
       replace_value:
           TEST: "__TEST_CONNECTION_ID__"
           PROD: "__PROD_CONNECTION_ID__"
