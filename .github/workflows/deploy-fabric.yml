@@ -10,6 +10,8 @@
 #   AZURE_CLIENT_SECRET    – Service Principal secret
 #   AZURE_TENANT_ID        – Entra ID tenant
 #   FABRIC_WORKSPACE_ID    – Target Fabric workspace GUID
+#   TEST_CONNECTION_ID     - Required only in TEST for parameter overrides
+#   PROD_CONNECTION_ID     - Required only in PROD for parameter overrides
 # =============================================================================
 
 name: Deploy to Fabric Workspace
@@ -59,10 +61,35 @@ jobs:
           esac
 
       - name: Replace parameter tokens from secrets
+        shell: python
         run: |
-          sed -i "s|__TEST_CONNECTION_ID__|$TEST_CONNECTION_ID|g" parameter.yml
-          sed -i "s|__PROD_CONNECTION_ID__|$PROD_CONNECTION_ID|g" parameter.yml
+          import os
+          from pathlib import Path
+          from uuid import UUID
+
+          environment = os.environ["ENVIRONMENT"]
+          if environment == "DEV":
+              print("DEV uses the source connection; no parameter replacement needed.")
+          else:
+              secret_name = f"{environment}_CONNECTION_ID"
+              connection_id = os.environ.get(secret_name, "").strip()
+              if not connection_id:
+                  raise SystemExit(
+                      f"::error::Add {secret_name} to the {environment} GitHub Environment secrets."
+                  )
+              try:
+                  UUID(connection_id)
+              except ValueError:
+                  raise SystemExit(f"::error::{secret_name} must be a connection GUID.") from None
+
+              path = Path("parameter.yml")
+              template = path.read_text(encoding="utf-8")
+              path.write_text(
+                  template.replace(f"__{secret_name}__", connection_id),
+                  encoding="utf-8",
+              )
         env:
+          ENVIRONMENT: ${{ steps.env.outputs.name }}
           TEST_CONNECTION_ID: ${{ secrets.TEST_CONNECTION_ID }}
           PROD_CONNECTION_ID: ${{ secrets.PROD_CONNECTION_ID }}
 

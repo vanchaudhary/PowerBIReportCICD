@@ -131,6 +131,16 @@ The workflow resolves the environment from the branch name (`dev` → `DEV`, `te
 | `TEST` | `TEST_CONNECTION_ID` | Connection GUID used by the semantic model in the **Test** workspace |
 | `PROD` | `PROD_CONNECTION_ID` | Connection GUID used by the semantic model in the **Prod** workspace |
 
+The workflow replaces only the token for the selected environment. DEV keeps
+the source connection and requires no connection-ID secret. Tokens for other
+environments remain unchanged so their replacement values stay non-empty during
+`fabric-cicd` validation. A TEST or PROD deployment fails before publishing if
+its connection-ID secret is missing or is not a GUID.
+
+Creating an environment does not share its secrets with other environments.
+The `UAT` environment belongs to the separate deployment-pipeline workflow; this
+workflow maps only `dev`, `test`, and `main` to `DEV`, `TEST`, and `PROD`.
+
 > **Finding your workspace ID:** Open the workspace in Fabric — the URL contains the GUID:
 > `https://app.fabric.microsoft.com/groups/<workspace-id>/...`
 
@@ -214,6 +224,8 @@ git push
 | `ModuleNotFoundError: fabric_cicd` | Ensure `requirements.txt` is present and lists `fabric-cicd`. |
 | Authentication failure | Verify the SPN has **Member** access to the target workspace and that all `AZURE_*` and `FABRIC_WORKSPACE_ID` secrets are set in the **correct** GitHub Environment. |
 | `Invalid workspace_id` | The `FABRIC_WORKSPACE_ID` secret must contain only the GUID (no URL prefix). |
+| `find_replace is missing a replace value for 'TEST' environment` (even during DEV) | An older workflow replaced an unavailable TEST secret with an empty string. Use the current workflow, which replaces only the selected environment's token. Do not copy TEST/PROD secrets into DEV to work around this. |
+| `Add TEST_CONNECTION_ID` / `Add PROD_CONNECTION_ID` | Add the named connection-ID secret under **Settings → Environments → TEST / PROD → Environment secrets**. Azure credentials and the workspace ID do not supply a connection ID. |
 | Parameter overrides not applied | Verify `parameter.yml` is in the repo root, the DEV `find_value` matches the actual DEV connection ID, and environment names are `DEV` / `TEST` / `PROD` (uppercase). |
 | Tokens (`__TEST_CONNECTION_ID__`) appear in deployed model | The matching `TEST_CONNECTION_ID` / `PROD_CONNECTION_ID` secret is missing from the resolved environment. |
 
