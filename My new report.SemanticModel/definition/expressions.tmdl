@@ -1,0 +1,10 @@
+/// Shared connection to the AdventureWorks SQL database.
+/// The ConnectionId below is the DEV environment value; fabric-cicd
+/// replaces it at deployment time using parameter.yml.
+expression AdventureWorksDW =
+		let
+			Source = Sql.Database("dev-sql-server.database.windows.net", "AdventureWorksDW", [ConnectionId = "00000000-0000-0000-0000-000000000000"])
+		in
+			Source
+	lineageTag: f8a3e2b1-4c7d-4e9f-a2b3-c4d5e6f78901
+

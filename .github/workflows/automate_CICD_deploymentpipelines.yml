@@ -1,0 +1,64 @@
+name: Automate CI/CD - Power BI Deployment Pipelines
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  PIPELINE_NAME: "PIBPCICD_Pipeline"
+  SCRIPT_PATH: "./scripts/deployall.ps1"
+
+jobs:
+  deploy-uat:
+    name: Deploy DEV -> UAT
+    runs-on: ubuntu-latest
+    environment: UAT
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Power BI PowerShell module
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name MicrosoftPowerBIMgmt -Scope CurrentUser -Force -AllowClobber
+
+      - name: Deploy DEV to UAT
+        shell: pwsh
+        env:
+          PBI_CLIENT_ID:     ${{ secrets.PBI_CLIENT_ID }}
+          PBI_CLIENT_SECRET: ${{ secrets.PBI_CLIENT_SECRET }}
+          PBI_TENANT_ID:     ${{ secrets.PBI_TENANT_ID }}
+        run: |
+          & "${{ env.SCRIPT_PATH }}" `
+            -PipelineName "${{ env.PIPELINE_NAME }}" `
+            -SourceStageOrder 0 `
+            -Note "DEV -> UAT | Run ${{ github.run_number }} | ${{ github.sha }}"
+
+  deploy-prod:
+    name: Deploy UAT -> PROD
+    needs: deploy-uat
+    runs-on: ubuntu-latest
+    environment: PROD
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Power BI PowerShell module
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name MicrosoftPowerBIMgmt -Scope CurrentUser -Force -AllowClobber
+
+      - name: Deploy UAT to PROD
+        shell: pwsh
+        env:
+          PBI_CLIENT_ID:     ${{ secrets.PBI_CLIENT_ID }}
+          PBI_CLIENT_SECRET: ${{ secrets.PBI_CLIENT_SECRET }}
+          PBI_TENANT_ID:     ${{ secrets.PBI_TENANT_ID }}
+        run: |
+          & "${{ env.SCRIPT_PATH }}" `
+            -PipelineName "${{ env.PIPELINE_NAME }}" `
+            -SourceStageOrder 1 `
+            -Note "UAT -> PROD | Run ${{ github.run_number }} | ${{ github.sha }}"

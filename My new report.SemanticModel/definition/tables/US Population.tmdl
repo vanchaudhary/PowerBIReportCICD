@@ -1,0 +1,46 @@
+/// Reference table of US state populations from the 2020 census. Used as the denominator for the 'Sales per Capita' measure to normalize sales by population.
+table 'US Population'
+	lineageTag: d209525b-8c0e-405e-b3ee-7c7b89c277d5
+
+	/// US state name. Join key to Reseller geography when slicing by state.
+	column State
+		dataType: string
+		lineageTag: 128e4f19-6da4-4466-98fc-ce34f2cb130b
+		summarizeBy: none
+		sourceColumn: State
+
+		annotation SummarizationSetBy = Automatic
+
+	/// 2020 census population for the state. Used as denominator in the Sales per Capita measure.
+	column Population
+		dataType: int64
+		formatString: #,0
+		lineageTag: a05bbf85-243d-41bc-9864-4110a1603749
+		summarizeBy: none
+		sourceColumn: Population
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'US Population' = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRecords({
+				        [State = "Oregon", Population = 4237256],
+				        [State = "Washington", Population = 7738692],
+				        [State = "Texas", Population = 29145505],
+				        [State = "Georgia", Population = 10711908],
+				        [State = "California", Population = 39538223],
+				        [State = "New York", Population = 20201249],
+				        [State = "Florida", Population = 21538187],
+				        [State = "Illinois", Population = 12812508],
+				        [State = "Ohio", Population = 11799448],
+				        [State = "Pennsylvania", Population = 13002700]
+				    }, type table [State = Text.Type, Population = Int64.Type])
+				in
+				    Source
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

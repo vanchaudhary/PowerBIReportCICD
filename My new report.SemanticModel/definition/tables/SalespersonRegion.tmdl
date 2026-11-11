@@ -1,0 +1,48 @@
+/// Bridge table linking salespeople to the regions they cover. Resolves the many-to-many relationship between Salesperson (Performance) and Region. Hidden from report consumers.
+table SalespersonRegion
+	lineageTag: 1563c2f0-da34-4103-9d26-ef8861e18353
+	sourceLineageTag: 1bc088d9-fc8b-44d4-a55c-864d6465b75c
+
+	/// Foreign key to Salesperson (Performance)[EmployeeKey]. Hidden bridge column.
+	column EmployeeKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 74150a74-c6a9-4792-a0e8-dff7399cb7f1
+		sourceLineageTag: 8ab8ec41-c04d-4740-ac69-a93e839b2433
+		dataCategory: Uncategorized
+		summarizeBy: none
+		sourceColumn: EmployeeKey
+
+		annotation SummarizationSetBy = User
+
+	/// Foreign key to Region[SalesTerritoryKey]. Hidden bridge column.
+	column SalesTerritoryKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: fe1ec4f7-38f6-4d43-b166-d10f1903aa44
+		sourceLineageTag: f80a41e7-424f-4921-b2e6-83ee3f6cbfe3
+		dataCategory: Uncategorized
+		summarizeBy: none
+		sourceColumn: SalesTerritoryKey
+
+		annotation SummarizationSetBy = User
+
+	partition SalespersonRegion = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRecords({
+				        [EmployeeKey = 1, SalesTerritoryKey = 2],
+				        [EmployeeKey = 2, SalesTerritoryKey = 3],
+				        [EmployeeKey = 3, SalesTerritoryKey = 4],
+				        [EmployeeKey = 4, SalesTerritoryKey = 1],
+				        [EmployeeKey = 5, SalesTerritoryKey = 5],
+				        [EmployeeKey = 6, SalesTerritoryKey = 6],
+				        [EmployeeKey = 7, SalesTerritoryKey = 7],
+				        [EmployeeKey = 8, SalesTerritoryKey = 8]
+				    }, type table [EmployeeKey = Int64.Type, SalesTerritoryKey = Int64.Type])
+				in
+				    Source
+

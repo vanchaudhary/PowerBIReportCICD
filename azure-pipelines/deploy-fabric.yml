@@ -1,0 +1,86 @@
+# =============================================================================
+# Fabric CI/CD — Deploy to Fabric Workspace (Azure DevOps)
+# =============================================================================
+# Triggers on push to dev, test, or main branches. Determines the target
+# workspace and environment from the branch name, then deploys using
+# fabric-cicd with parameter overrides from parameter.yml.
+#
+# Prerequisites:
+#   1. Create an Azure DevOps Service Connection (Azure Resource Manager)
+#      using the same Service Principal that has access to Fabric workspaces.
+#      Name it "fabric-service-connection" (or update azureSubscription below).
+#   2. Create a Variable Group named "Fabric-Deploy" with:
+#        DEV_WORKSPACE_ID   – Dev Fabric workspace GUID
+#        TEST_WORKSPACE_ID  – Test Fabric workspace GUID
+#        PROD_WORKSPACE_ID  – Prod Fabric workspace GUID
+#      Or link secrets from Azure Key Vault.
+# =============================================================================
+
+trigger:
+  branches:
+    include:
+      - dev
+      - test
+      - main
+
+variables:
+  - group: Fabric-Deploy
+  - name: pythonVersion
+    value: "3.12"
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Deploy
+    displayName: "Deploy to Fabric Workspace"
+    jobs:
+      - job: DeployItems
+        displayName: "Publish Fabric items"
+        steps:
+          - checkout: self
+
+          - task: UsePythonVersion@0
+            displayName: "Set up Python $(pythonVersion)"
+            inputs:
+              versionSpec: $(pythonVersion)
+              addToPath: true
+
+          - script: pip install -r requirements.txt
+            displayName: "Install dependencies"
+
+          - script: |
+              sed -i "s|__TEST_CONNECTION_ID__|$(TEST_CONNECTION_ID)|g" parameter.yml
+              sed -i "s|__PROD_CONNECTION_ID__|$(PROD_CONNECTION_ID)|g" parameter.yml
+            displayName: "Replace parameter tokens from variable group"
+
+          - task: AzureCLI@2
+            displayName: "Deploy Fabric workspace"
+            inputs:
+              azureSubscription: "fabric-service-connection"
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                # Determine environment from branch name
+                BRANCH_NAME=$(Build.SourceBranchName)
+                case "$BRANCH_NAME" in
+                  dev)
+                    export ENVIRONMENT="DEV"
+                    export FABRIC_WORKSPACE_ID="$(DEV_WORKSPACE_ID)"
+                    ;;
+                  test)
+                    export ENVIRONMENT="TEST"
+                    export FABRIC_WORKSPACE_ID="$(TEST_WORKSPACE_ID)"
+                    ;;
+                  main)
+                    export ENVIRONMENT="PROD"
+                    export FABRIC_WORKSPACE_ID="$(PROD_WORKSPACE_ID)"
+                    ;;
+                  *)
+                    echo "##vso[task.logissue type=error]Unsupported branch: $BRANCH_NAME"
+                    exit 1
+                    ;;
+                esac
+
+                echo "Deploying to $ENVIRONMENT (workspace: $FABRIC_WORKSPACE_ID)"
+                python -u $(System.DefaultWorkingDirectory)/.deploy/fabric_workspace.py

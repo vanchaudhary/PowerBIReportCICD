@@ -1,0 +1,76 @@
+# =============================================================================
+# Fabric CI/CD — Deploy to Fabric Workspace (GitHub Actions)
+# =============================================================================
+# Triggers on push to dev, test, or main branches. Determines the target
+# workspace and environment from the branch name, then deploys using
+# fabric-cicd with parameter overrides from parameter.yml.
+#
+# Required GitHub Secrets (per environment):
+#   AZURE_CLIENT_ID        – Service Principal (App Registration) client ID
+#   AZURE_CLIENT_SECRET    – Service Principal secret
+#   AZURE_TENANT_ID        – Entra ID tenant
+#   FABRIC_WORKSPACE_ID    – Target Fabric workspace GUID
+# =============================================================================
+
+name: Deploy to Fabric Workspace
+
+on:
+  push:
+    branches: [dev, test, main]
+
+# Prevent concurrent deploys to the same environment
+concurrency:
+  group: fabric-deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # ── Map branch → GitHub Environment ──────────────────────────────────
+    environment: >-
+      ${{
+        github.ref_name == 'dev'  && 'DEV'  ||
+        github.ref_name == 'test' && 'TEST' ||
+        github.ref_name == 'main' && 'PROD' ||
+        ''
+      }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Resolve environment name
+        id: env
+        run: |
+          case "${{ github.ref_name }}" in
+            dev)  echo "name=DEV"  >> "$GITHUB_OUTPUT" ;;
+            test) echo "name=TEST" >> "$GITHUB_OUTPUT" ;;
+            main) echo "name=PROD" >> "$GITHUB_OUTPUT" ;;
+            *)    echo "::error::Unsupported branch"; exit 1 ;;
+          esac
+
+      - name: Replace parameter tokens from secrets
+        run: |
+          sed -i "s|__TEST_CONNECTION_ID__|$TEST_CONNECTION_ID|g" parameter.yml
+          sed -i "s|__PROD_CONNECTION_ID__|$PROD_CONNECTION_ID|g" parameter.yml
+        env:
+          TEST_CONNECTION_ID: ${{ secrets.TEST_CONNECTION_ID }}
+          PROD_CONNECTION_ID: ${{ secrets.PROD_CONNECTION_ID }}
+
+      - name: Deploy to Fabric workspace
+        env:
+          FABRIC_WORKSPACE_ID: ${{ secrets.FABRIC_WORKSPACE_ID }}
+          ENVIRONMENT: ${{ steps.env.outputs.name }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: python -u .deploy/fabric_workspace.py
