@@ -3,7 +3,7 @@
 # =============================================================================
 # Triggers on push to dev, test, or main branches. Determines the target
 # workspace and environment from the branch name, then deploys using
-# fabric-cicd with parameter overrides from parameter.yml.
+# fabric-cicd. The sample model uses embedded data and needs no connection IDs.
 #
 # Prerequisites:
 #   1. Create an Azure DevOps Service Connection (Azure Resource Manager)
@@ -48,11 +48,6 @@ stages:
 
           - script: pip install -r requirements.txt
             displayName: "Install dependencies"
-
-          - script: |
-              sed -i "s|__TEST_CONNECTION_ID__|$(TEST_CONNECTION_ID)|g" parameter.yml
-              sed -i "s|__PROD_CONNECTION_ID__|$(PROD_CONNECTION_ID)|g" parameter.yml
-            displayName: "Replace parameter tokens from variable group"
 
           - task: AzureCLI@2
             displayName: "Deploy Fabric workspace"

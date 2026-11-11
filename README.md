@@ -380,7 +380,7 @@ flowchart TD
 This repo includes both modes:
 
 - **Basic mode** — A single `main` branch connected directly to one Fabric workspace via Fabric's Git integration (see [Syncing This Repo to Microsoft Fabric](#syncing-this-repo-to-microsoft-fabric)).
-- **Full CI/CD mode** — A multi-stage pipeline combining **Option 1** (branch-per-environment strategy) with **Option 2** (fabric-cicd parameter overrides). Ready-to-run pipelines are provided for both **GitHub Actions** and **Azure DevOps Pipelines**.
+- **Full CI/CD mode** — A branch-per-environment pipeline using `fabric-cicd` to deploy the embedded-data demo. Parameter overrides can be added later for external data sources. Ready-to-run pipelines are provided for both **GitHub Actions** and **Azure DevOps Pipelines**.
 
 ### CI/CD Implementation
 
@@ -412,26 +412,27 @@ flowchart LR
     style PW fill:#f8d7da,stroke:#dc3545
 ```
 
-**How it works:** Source files always contain DEV values. When deploying to TEST or PROD, `fabric-cicd` reads `parameter.yml` and swaps environment-specific values (connection IDs, lakehouse references, etc.) at deployment time — no manual find-and-replace in PRs.
+**How it works:** The branch selects the target environment and workspace. All ten tables use embedded sample data, so DEV, TEST, and PROD deploy the same report and data without an external database or gateway.
 
-**Secure connection ID handling:** `parameter.yml` uses placeholder tokens (`__TEST_CONNECTION_ID__`, `__PROD_CONNECTION_ID__`) instead of hard-coded GUIDs for the TEST and PROD environments. The CI/CD pipeline replaces these tokens at runtime with real values sourced from **GitHub Secrets** (GitHub Actions) or a **Variable Group** (Azure Pipelines) — so sensitive connection IDs are never committed to the repository.
+**Configuration:** `parameter.yml` contains `find_replace: []`; there are no connection-ID tokens to replace. GitHub Environments need only the Azure client ID, client secret, tenant ID, and target workspace ID. Azure Pipelines uses its service connection and workspace-ID variable group. GitHub source-control connections are separate from semantic model data connections.
 
-**How to validate the replaced values:**
-1. Install VS Code + the Fabric Studio extension.
-2. Log in to your Microsoft Fabric/Power BI account.
-3. In the Fabric Workspaces panel, expand your Semantic Model.
-4. Navigate to Definition folder > Definition folder > expressions.tmdl.
-5. The file will open showing the current live state of the deployed model — compare it against your git-committed version.
+**How to validate deployment:**
+1. Confirm the deployment workflow completed successfully.
+2. Open the target workspace in Fabric and verify the report and semantic model are present.
+3. Refresh the semantic model to load its embedded sample data, then open the report and verify its visuals.
+
+If you later replace the embedded data with an external source, configure the
+actual data connection and any required parameter overrides separately.
 
 #### CI/CD Files
 
 | File | Purpose |
 |---|---|
-| `parameter.yml` | Environment-specific value overrides for `fabric-cicd`; TEST/PROD connection IDs use `__PLACEHOLDER__` tokens replaced at runtime |
+| `parameter.yml` | Empty `fabric-cicd` override list for the embedded-data demo |
 | `.deploy/fabric_workspace.py` | Python deployment script (shared by both pipeline platforms) |
 | `requirements.txt` | Python dependencies (`fabric-cicd`, `azure-identity`) |
-| `.github/workflows/deploy-fabric.yml` | GitHub Actions workflow — triggers on push to `dev`/`test`/`main`; replaces connection ID tokens from `TEST_CONNECTION_ID` / `PROD_CONNECTION_ID` secrets |
-| `azure-pipelines/deploy-fabric.yml` | Azure Pipelines YAML — triggers on push to `dev`/`test`/`main`; replaces connection ID tokens from the `Fabric-Deploy` variable group |
+| `.github/workflows/deploy-fabric.yml` | GitHub Actions workflow — triggers on push to `dev`/`test`/`main`; uses the selected environment's credentials and workspace ID |
+| `azure-pipelines/deploy-fabric.yml` | Azure Pipelines YAML — triggers on push to `dev`/`test`/`main`; uses a service connection and workspace IDs from the `Fabric-Deploy` variable group |
 
 #### Demo Guides
 

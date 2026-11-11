@@ -132,15 +132,14 @@ For each workspace (Dev, Test, Prod):
 | `DEV_WORKSPACE_ID` | Dev workspace GUID | No |
 | `TEST_WORKSPACE_ID` | Test workspace GUID | No |
 | `PROD_WORKSPACE_ID` | Prod workspace GUID | No |
-| `TEST_CONNECTION_ID` | Fabric connection GUID for the **Test** semantic model | Yes |
-| `PROD_CONNECTION_ID` | Fabric connection GUID for the **Prod** semantic model | Yes |
 
 4. Click **Save**.
 
 > **Finding your workspace ID:** Open the workspace in Fabric — the URL contains the workspace ID:
 > `https://app.fabric.microsoft.com/groups/<workspace-id>/...`
 
-> **Finding a connection ID:** Fabric portal → **Settings** → **Manage connections and gateways** → select the connection → copy the **Connection ID**.
+The sample model uses embedded data. No external database, gateway, or
+connection-ID variables are required.
 
 > **Tip:** For sensitive values you can also link the variable group to an Azure Key Vault.
 
@@ -157,32 +156,19 @@ For each workspace (Dev, Test, Prod):
 
 ---
 
-## Step 7 — Update parameter.yml
+## Step 7 — Keep the sample parameter configuration
 
-The repo ships [parameter.yml](../parameter.yml) with a placeholder DEV connection ID (`00000000-0000-0000-0000-000000000000`) and the tokens `__TEST_CONNECTION_ID__` / `__PROD_CONNECTION_ID__`. The pipeline replaces the tokens at deploy time using the variable group values from Step 5.
-
-Replace the `find_value` with your **DEV** connection GUID:
+The repo ships [parameter.yml](../parameter.yml) with no active overrides:
 
 ```yaml
-find_replace:
-    - find_value: "<your-dev-connection-guid>"   # the connection ID used by the DEV semantic model
-      replace_value:
-          TEST: "__TEST_CONNECTION_ID__"          # replaced by the pipeline at runtime
-          PROD: "__PROD_CONNECTION_ID__"          # replaced by the pipeline at runtime
-      item_type: "SemanticModel"
+find_replace: []
 ```
 
-> **Important:** Only commit the **DEV** connection GUID. The TEST and PROD values are injected at runtime from the `Fabric-Deploy` variable group — never commit real connection IDs for those environments.
-
-Commit and push to `dev`:
-
-```bash
-git checkout dev
-# edit parameter.yml
-git add parameter.yml
-git commit -m "Configure parameter overrides for environments"
-git push
-```
+Keep this configuration for the embedded-data demo. The pipeline deploys the
+same report and sample data to each environment's target workspace without
+replacing connection IDs. If you later switch to an external data source,
+configure its connection and any required environment-specific overrides
+separately.
 
 ---
 
@@ -211,8 +197,8 @@ git push
 2. Source: `dev` → Target: `test`.
 3. Review and **Complete** the PR (this pushes to `test`).
 4. The push triggers the pipeline on `test` with `environment=TEST`.
-5. The pipeline runs `sed` to swap `__TEST_CONNECTION_ID__` in `parameter.yml`, then deploys to the **Test** workspace.
-6. Open the **Test** workspace in Fabric and verify the semantic model now points to the **Test** connection.
+5. The pipeline deploys the report and embedded-data semantic model to the **Test** workspace.
+6. Open the **Test** workspace in Fabric and verify the change.
 
 ### Demo 3 — Promote to Prod
 
@@ -222,7 +208,7 @@ git push
 
 ### Key talking point
 
-> "Notice we never changed any connection strings or URLs in the PR. The `parameter.yml` file tells `fabric-cicd` to swap environment-specific values at deployment time. The source files always stay in their dev state."
+> "The report and embedded sample data stay the same across environments. The branch selects the target workspace ID from the variable group, while the service connection provides deployment credentials."
 
 ---
 
@@ -235,8 +221,7 @@ git push
 | Service connection auth failure | Verify the SPN credentials and that it has **Member** access to the Fabric workspaces. |
 | `Variable group 'Fabric-Deploy' could not be found` | Ensure the variable group exists and authorize it for the pipeline (first run prompts for permission). |
 | `Invalid workspace_id` | Variable values must contain only the GUID (no URL prefix). |
-| Parameter overrides not applied | Verify `parameter.yml` is in the repo root, the DEV `find_value` matches the actual DEV connection ID, and environment names are `DEV` / `TEST` / `PROD` (uppercase). |
-| Tokens (`__TEST_CONNECTION_ID__`) appear in deployed model | The matching variable is missing or empty in the `Fabric-Deploy` variable group. |
+| Pipeline still replaces connection-ID tokens or reports missing replacement values | Ensure the target branch has the current pipeline and `parameter.yml` with `find_replace: []`. No connection-ID variables are needed for embedded data. |
 
 ---
 
@@ -246,5 +231,5 @@ git push
 |---|---|
 | [azure-pipelines/deploy-fabric.yml](../azure-pipelines/deploy-fabric.yml) | Azure Pipelines YAML — triggers on push to `dev`/`test`/`main` |
 | [.deploy/fabric_workspace.py](../.deploy/fabric_workspace.py) | Python deployment script using `fabric-cicd` |
-| [parameter.yml](../parameter.yml) | Environment-specific value overrides |
+| [parameter.yml](../parameter.yml) | Empty override list for the embedded-data demo |
 | [requirements.txt](../requirements.txt) | Python dependencies |
