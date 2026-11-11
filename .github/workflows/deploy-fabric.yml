@@ -3,7 +3,7 @@
 # =============================================================================
 # Triggers on push to dev, test, or main branches. Determines the target
 # workspace and environment from the branch name, then deploys using
-# fabric-cicd with parameter overrides from parameter.yml.
+# fabric-cicd. The sample model uses embedded data and needs no connection IDs.
 #
 # Required GitHub Secrets (per environment):
 #   AZURE_CLIENT_ID        – Service Principal (App Registration) client ID
@@ -57,14 +57,6 @@ jobs:
             main) echo "name=PROD" >> "$GITHUB_OUTPUT" ;;
             *)    echo "::error::Unsupported branch"; exit 1 ;;
           esac
-
-      - name: Replace parameter tokens from secrets
-        run: |
-          sed -i "s|__TEST_CONNECTION_ID__|$TEST_CONNECTION_ID|g" parameter.yml
-          sed -i "s|__PROD_CONNECTION_ID__|$PROD_CONNECTION_ID|g" parameter.yml
-        env:
-          TEST_CONNECTION_ID: ${{ secrets.TEST_CONNECTION_ID }}
-          PROD_CONNECTION_ID: ${{ secrets.PROD_CONNECTION_ID }}
 
       - name: Deploy to Fabric workspace
         env:

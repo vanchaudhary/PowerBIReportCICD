@@ -1,43 +1,9 @@
-# =============================================================================
-# fabric-cicd Parameter Overrides
-# =============================================================================
-# This file defines environment-specific values that fabric-cicd replaces at
-# deployment time. The environment keys (DEV, TEST, PROD) must match the
-# `environment` value passed to the FabricWorkspace constructor.
+# fabric-cicd parameter overrides
 #
-# Source files in Git always contain the DEV values. When deploying to TEST or
-# PROD, fabric-cicd swaps them automatically — no manual find-replace needed
-# during PRs.
+# This demo uses embedded sample data in every environment. No external SQL
+# connection or environment-specific data-source replacement is required.
+# Keep an explicit empty list so fabric-cicd can validate this parameter file.
 #
 # Docs: https://microsoft.github.io/fabric-cicd/latest/how_to/parameterization/
-# =============================================================================
 
-find_replace:
-    # ── Semantic Model connection binding ──────────────────────────────────
-    # Replace the DEV connection ID with the target environment's connection.
-    # To find your connection ID: Fabric portal → Settings → Manage connections
-    # The __PLACEHOLDER__ tokens below are replaced at pipeline runtime with
-    # values from the "Fabric-Deploy" variable group — never commit real IDs.
-    - find_value: "00000000-0000-0000-0000-000000000000"       # DEV connection ID
-      replace_value:
-          TEST: "__TEST_CONNECTION_ID__"
-          PROD: "__PROD_CONNECTION_ID__"
-      item_type: "SemanticModel"
-
-    # ── Report workspace binding ──────────────────────────────────────────
-    # If the report uses byConnection, update the workspace reference.
-    # (Only needed when Report and SemanticModel are in separate workspaces.)
-    # - find_value: "dev-workspace-id"
-    #   replace_value:
-    #       TEST: "$workspace.$id"
-    #       PROD: "$workspace.$id"
-    #   item_type: "Report"
-    #   file_path: "*/definition.pbir"
-
-# semantic_model_binding:
-#     # Uncomment and configure when your semantic model uses a data connection
-#     # (SQL, Lakehouse, etc.) that differs across environments.
-#     default:
-#         connection_id:
-#             TEST: "your-test-connection-guid"
-#             PROD: "your-prod-connection-guid"
+find_replace: []

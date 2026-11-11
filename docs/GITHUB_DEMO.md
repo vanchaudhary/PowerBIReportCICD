@@ -124,46 +124,33 @@ The workflow resolves the environment from the branch name (`dev` → `DEV`, `te
 | `AZURE_TENANT_ID` | Entra ID tenant ID |
 | `FABRIC_WORKSPACE_ID` | The target Fabric workspace GUID **for that environment** |
 
-**Additionally, only on the matching environment:**
+These four secrets are sufficient for this demo. All tables use embedded sample
+data, so no external database, gateway, or connection-ID secrets are required.
 
-| Environment | Extra Secret | Value |
-|---|---|---|
-| `TEST` | `TEST_CONNECTION_ID` | Connection GUID used by the semantic model in the **Test** workspace |
-| `PROD` | `PROD_CONNECTION_ID` | Connection GUID used by the semantic model in the **Prod** workspace |
+Creating an environment does not share its secrets with other environments.
+The `UAT` environment belongs to the separate deployment-pipeline workflow; this
+workflow maps only `dev`, `test`, and `main` to `DEV`, `TEST`, and `PROD`.
 
 > **Finding your workspace ID:** Open the workspace in Fabric — the URL contains the GUID:
 > `https://app.fabric.microsoft.com/groups/<workspace-id>/...`
 
-> **Finding a connection ID:** Fabric portal → **Settings** → **Manage connections and gateways** → select the connection → copy the **Connection ID**.
-
 ---
 
-## Step 5 — Update parameter.yml
+## Step 5 — Keep the sample parameter configuration
 
-The repo ships [parameter.yml](../parameter.yml) with a placeholder DEV connection ID (`00000000-0000-0000-0000-000000000000`) and the tokens `__TEST_CONNECTION_ID__` / `__PROD_CONNECTION_ID__`. The workflow replaces the tokens at deploy time using the secrets from Step 4b.
-
-Replace the `find_value` with your **DEV** connection GUID:
+The repo ships [parameter.yml](../parameter.yml) with no active overrides:
 
 ```yaml
-find_replace:
-    - find_value: "<your-dev-connection-guid>"   # the connection ID used by the DEV semantic model
-      replace_value:
-          TEST: "__TEST_CONNECTION_ID__"          # replaced by the workflow at runtime
-          PROD: "__PROD_CONNECTION_ID__"          # replaced by the workflow at runtime
-      item_type: "SemanticModel"
+find_replace: []
 ```
 
-> **Important:** Only commit the **DEV** connection GUID. TEST and PROD values are injected from GitHub Secrets — never commit real connection IDs for those environments.
+Keep this configuration for the embedded-data demo. The workflow deploys the
+same report and sample data to each environment's target workspace without
+replacing connection IDs. GitHub source-control connections are not semantic
+model data connections and are not needed as parameter overrides.
 
-Commit and push to `dev`:
-
-```bash
-git checkout dev
-# edit parameter.yml
-git add parameter.yml
-git commit -m "Configure parameter overrides for environments"
-git push
-```
+If you later switch to an external data source, configure its connection and
+any required environment-specific overrides separately.
 
 ---
 
@@ -191,8 +178,8 @@ git push
 1. In GitHub, open a PR from `dev` → `test`.
 2. Review and **merge** the PR (this pushes to `test`).
 3. The push triggers the workflow on the `test` branch with the `TEST` environment.
-4. The workflow swaps `__TEST_CONNECTION_ID__` in `parameter.yml`, then deploys.
-5. Open the **Test** workspace and verify the change — note the semantic model now points to the **Test** connection.
+4. The workflow deploys the report and embedded-data semantic model to the **Test** workspace.
+5. Open the **Test** workspace and verify the change.
 
 ### Demo 3 — Promote to Prod
 
@@ -202,7 +189,7 @@ git push
 
 ### Key talking point
 
-> "Notice we never changed any connection strings or URLs in the PR. The `parameter.yml` file tells `fabric-cicd` to swap environment-specific values at deployment time. The source files always stay in their dev state."
+> "The report and embedded sample data stay the same across environments. The branch selects the GitHub Environment, which supplies the target workspace ID and deployment credentials."
 
 ---
 
@@ -214,8 +201,7 @@ git push
 | `ModuleNotFoundError: fabric_cicd` | Ensure `requirements.txt` is present and lists `fabric-cicd`. |
 | Authentication failure | Verify the SPN has **Member** access to the target workspace and that all `AZURE_*` and `FABRIC_WORKSPACE_ID` secrets are set in the **correct** GitHub Environment. |
 | `Invalid workspace_id` | The `FABRIC_WORKSPACE_ID` secret must contain only the GUID (no URL prefix). |
-| Parameter overrides not applied | Verify `parameter.yml` is in the repo root, the DEV `find_value` matches the actual DEV connection ID, and environment names are `DEV` / `TEST` / `PROD` (uppercase). |
-| Tokens (`__TEST_CONNECTION_ID__`) appear in deployed model | The matching `TEST_CONNECTION_ID` / `PROD_CONNECTION_ID` secret is missing from the resolved environment. |
+| Workflow still asks for connection-ID secrets or reports missing replacement values | Ensure the target branch has the current workflow and `parameter.yml` with `find_replace: []`. Push a new commit to start a new run; rerunning an old run uses its old workflow. |
 
 ---
 
@@ -225,5 +211,5 @@ git push
 |---|---|
 | [.github/workflows/deploy-fabric.yml](../.github/workflows/deploy-fabric.yml) | GitHub Actions workflow — triggers on push to `dev`/`test`/`main` |
 | [.deploy/fabric_workspace.py](../.deploy/fabric_workspace.py) | Python deployment script using `fabric-cicd` |
-| [parameter.yml](../parameter.yml) | Environment-specific value overrides |
+| [parameter.yml](../parameter.yml) | Empty override list for the embedded-data demo |
 | [requirements.txt](../requirements.txt) | Python dependencies |

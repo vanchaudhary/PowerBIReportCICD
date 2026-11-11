@@ -1,0 +1,83 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.15.0/schema.json",
+  "name": "c3636e7d712da35c46aa",
+  "position": {
+    "x": 734.28571428571433,
+    "y": 52.857142857142861,
+    "z": 0,
+    "height": 360,
+    "width": 454.28571428571433,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "US Population"
+                    }
+                  },
+                  "Property": "State"
+                }
+              },
+              "queryRef": "US Population.State",
+              "nativeQueryRef": "State"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "US Population"
+                    }
+                  },
+                  "Property": "Population"
+                }
+              },
+              "queryRef": "US Population.Population",
+              "nativeQueryRef": "Population"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Sales"
+                    }
+                  },
+                  "Property": "Sales per Capita"
+                }
+              },
+              "queryRef": "Sales.Sales per Capita",
+              "nativeQueryRef": "Sales per Capita"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Sales"
+                  }
+                },
+                "Property": "Sales per Capita"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

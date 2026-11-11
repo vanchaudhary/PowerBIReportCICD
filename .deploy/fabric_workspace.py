@@ -2,7 +2,8 @@
 Fabric CI/CD Deployment Script
 ===============================
 Deploys Fabric items (SemanticModel, Report) to a target workspace using the
-fabric-cicd library. Environment-specific values are substituted via parameter.yml.
+fabric-cicd library. The sample model uses embedded data, so parameter.yml has
+no active overrides and no external connection IDs are required.
 
 Usage (from repo root):
     python .deploy/fabric_workspace.py
