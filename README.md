@@ -1,7 +1,6 @@
 # Power BI Git Demo
 
-[![Fork this repo](https://img.shields.io/badge/Fork%20this%20repo-%E2%91%A0%20Start%20here-blue?style=for-the-badge&logo=github)](https://github.com/samueltauil/powerbi-git-demo/fork)
-
+Fork this repo
 A demonstration Power BI project showing how to integrate a Power BI report and semantic model with GitHub using Microsoft Fabric's Git integration feature.
 
 ```mermaid

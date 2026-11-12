@@ -6,7 +6,7 @@ Thank you for your interest in contributing! This is a public educational reposi
 
 If you find something incorrect, unclear, or out of date:
 
-1. Open a [GitHub Issue](https://github.com/samueltauil/powerbi-git-demo/issues) with a clear title and description
+1. Open a Github Issues with a clear title and description
 2. Include the section or file that needs attention
 3. If applicable, include the correct information or a suggested fix
 

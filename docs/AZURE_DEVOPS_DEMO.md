@@ -54,7 +54,7 @@ flowchart LR
 ## Step 1 — Import the Repository into Azure DevOps
 
 1. Go to your Azure DevOps project → **Repos** → **Import a repository**.
-2. Clone URL: `https://github.com/samueltauil/powerbi-git-demo.git`
+2. Clone URL: <GitURL>
 3. Click **Import**.
 4. Clone locally:
 
